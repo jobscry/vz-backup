@@ -89,7 +89,7 @@ class BackupArchive(models.Model):
 
 
 def _unlink_archive(sender, instance, **kwargs):
-    os.nlink(instance.path)
+    os.unlink(instance.path)
 
 pre_delete.connect(_unlink_archive, sender=BackupArchive)
 
