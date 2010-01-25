@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
 
+from vz_backup.models import BackupObject
+
+def mark_changed(sender, instance, **kwargs):
+    """Mark Changed
+    
+    post save signal
+    sender is whatever you'd like to be "watched"
+    
+    This is one way to watch for changes on models, this requires you to manually
+    add this signal to the models you want to watch.
+    """
+    backup_object = BackupObject.objects.get(sender._meta.app_label)
+    if not backup_object.changed_since_last_backup:
+        backup_object.changed_since_last_backup = True
+        backup_object.save()
+
 
 def load_backupObjects(sender, created_models, **kwargs):
     """Load Backup Objects

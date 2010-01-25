@@ -32,6 +32,9 @@ class BackupObject(models.Model):
 
 
     def backup(self):
+        if not self.changed_since_last_backup:
+            return
+
         dt = datetime.datetime.now()
         name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'), int(time.time()), FORMAT)
 
