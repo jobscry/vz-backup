@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.core.management.commands import dumpdata
 from django.db import models
-from django.db.models.signals import post_syncdb, pre_delete
+from django.db.models.signals import post_save, post_syncdb, pre_delete
 
 import datetime
 import gzip
@@ -26,6 +26,8 @@ class BackupObject(models.Model):
     compress = models.BooleanField(default=True)
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
+    last_backup =  models.DateTimeField(blank=True, null=True)
+    changed_since_last_backup = models.BooleanField(default=True)
     modified = models.DateTimeField(blank=True, auto_now=True)   
 
 
@@ -65,14 +67,6 @@ class BackupObject(models.Model):
     def __unicode__(self):
         return self.app_label
 
-def _load_backupObjects(sender, created_models, **kwargs):
-    for model in created_models:
-        BackupObject.objects.get_or_create(
-            app_label=model._meta.app_label
-        )
-
-post_syncdb.connect(_load_backupObjects)
-
 
 class BackupArchive(models.Model):
     """Backup Archive"""
@@ -88,12 +82,11 @@ class BackupArchive(models.Model):
         return u"%s on %s" % (self.backup_object, self.created.isoformat())
 
 
-def _unlink_archive(sender, instance, **kwargs):
-    os.unlink(instance.path)
-
-pre_delete.connect(_unlink_archive, sender=BackupArchive)
-
 def backup_all():
     bs = BackupObject.objects.all()
     for b in bs:
         b.backup()
+
+
+post_save.connect(vz_backup.signals.update_backup_object, sender=BackupArchive)
+pre_delete.connect(vz_backup.signals.unlink_archive, sender=BackupArchive)
