@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from django.core.exceptions import ObjectDoesNotExist
 from vz_backup.models import BackupObject
 
 def mark_changed(sender, instance, **kwargs):
@@ -11,10 +11,13 @@ def mark_changed(sender, instance, **kwargs):
     This is one way to watch for changes on models, this requires you to manually
     add this signal to the models you want to watch.
     """
-    backup_object = BackupObject.objects.get(sender._meta.app_label)
-    if not backup_object.changed_since_last_backup:
-        backup_object.changed_since_last_backup = True
-        backup_object.save()
+    try:
+        backup_object = BackupObject.objects.get(sender._meta.app_label)
+        if not backup_object.changed_since_last_backup:
+            backup_object.changed_since_last_backup = True
+            backup_object.save()
+    except ObjectDoesNotExist:
+        pass
 
 
 def load_backupObjects(sender, created_models, **kwargs):
