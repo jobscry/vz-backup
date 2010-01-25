@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.core.management.commands import dumpdata
 from django.db import models
-from django.db.models.signals import post_save, post_syncdb, pre_delete
+from django.db.models.signals import post_save, pre_delete
 
 import datetime
 import gzip
@@ -90,6 +90,7 @@ def backup_all():
     for b in bs:
         b.backup()
 
+from vz_backup.signals import *
 
-post_save.connect(vz_backup.signals.update_backup_object, sender=BackupArchive)
-pre_delete.connect(vz_backup.signals.unlink_archive, sender=BackupArchive)
+post_save.connect(update_backup_object, sender=BackupArchive)
+pre_delete.connect(unlink_archive, sender=BackupArchive)

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.db.models.signals import post_save, post_syncdb
 from django.core.exceptions import ObjectDoesNotExist
 from vz_backup.models import BackupObject
 
@@ -56,4 +57,4 @@ def update_backup_object(sender, instance, created, **kwargs):
         backup_object.changed_since_last_backup = False
         backup_object.save()
 
-post_syncdb.connect(_load_backupObjects)
+post_syncdb.connect(load_backupObjects)
