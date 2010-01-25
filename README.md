@@ -6,6 +6,7 @@ Django App for automagically backing up Models data.  Backups can be compressed,
 TODO
 ====
 
+* Auto backup upon syncdb
 * Email
     * If-changed
 * Size Experimentation
