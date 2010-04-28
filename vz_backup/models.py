@@ -78,6 +78,8 @@ class BackupArchive(models.Model):
     name = models.CharField(blank=True, max_length=100)
     path = models.FilePathField(path=settings.VZ_BACKUP_DIR)
     size = models.BigIntegerField(default=0)
+    keep = models.BooleanField(default=False)
+    edited = models.DateTimeField(blank=True, auto_now=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     
 
