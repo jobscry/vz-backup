@@ -6,7 +6,6 @@ Django App for automagically backing up Models data.  Backups can be compressed,
 TODO
 ====
 
-* Auto backup upon syncdb
 * Email
     * If-changed
 * Size Experimentation
@@ -15,3 +14,21 @@ TODO
 * Re-load 
     * From Admin Site
     * From Command
+
+Models
+======
+
+BackupObject
+------------
+
+A backup manager for an app.
+
+Management Commands
+===================
+
+add_to_backups
+----------------
+
+`./manage.py add_to_backups widget`
+
+This creates a BackupObject for the widget app.

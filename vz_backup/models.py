@@ -21,7 +21,7 @@ class BackupObject(models.Model):
     """
 
     app_label = models.CharField(blank=True, max_length=100, unique=True)
-    include = models.BooleanField(default=True)
+    include = models.BooleanField(default=True, help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
     compress = models.BooleanField(default=True)
     send_to_admins = models.BooleanField(default=True)
