@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from django.db.models.signals import post_save, post_syncdb
-from django.core.exceptions import ObjectDoesNotExist
 from vz_backup.models import BackupObject
 
 def mark_changed(sender, instance, **kwargs):
@@ -17,20 +16,8 @@ def mark_changed(sender, instance, **kwargs):
         if not backup_object.changed_since_last_backup:
             backup_object.changed_since_last_backup = True
             backup_object.save()
-    except ObjectDoesNotExist:
+    except BackupObject.DoesNotExist:
         pass
-
-
-def load_backupObjects(sender, created_models, **kwargs):
-    """Load Backup Objects
-    
-    post_syncdb signal
-    
-    Creates BackupObjects for each installed app."""
-    for model in created_models:
-        BackupObject.objects.get_or_create(
-            app_label=model._meta.app_label
-        )
 
 
 def unlink_archive(sender, instance, **kwargs):
@@ -56,5 +43,3 @@ def update_backup_object(sender, instance, created, **kwargs):
         backup_object.last_backup = instance.created
         backup_object.changed_since_last_backup = False
         backup_object.save()
-
-post_syncdb.connect(load_backupObjects)

@@ -31,7 +31,7 @@ class BackupObject(models.Model):
     modified = models.DateTimeField(blank=True, auto_now=True)   
 
 
-    def backup(self):
+    def backup(self, notes=None):
         if not self.changed_since_last_backup:
             return
 
@@ -61,10 +61,11 @@ class BackupObject(models.Model):
                 backup_object=self,
                 name=name,
                 path=path,
-                size=os.path.getsize(path)
+                size=os.path.getsize(path),
+                notes=notes
             )
-        except IOError:
-            pass
+     #   except IOError:
+      #      pass
 
 
     def __unicode__(self):
@@ -78,6 +79,7 @@ class BackupArchive(models.Model):
     name = models.CharField(blank=True, max_length=100)
     path = models.FilePathField(path=settings.VZ_BACKUP_DIR)
     size = models.BigIntegerField(default=0)
+    notes = models.TextField(blank=True, null=True, default='')
     keep = models.BooleanField(default=False)
     edited = models.DateTimeField(blank=True, auto_now=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
