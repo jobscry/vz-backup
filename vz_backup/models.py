@@ -35,7 +35,6 @@ class BackupObject(models.Model):
     prune_value = models.CharField(blank=True, null=True, max_length='255', default='10')
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
-    last_backup =  models.DateTimeField(blank=True, null=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
 
     def prune(self):
