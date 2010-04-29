@@ -27,14 +27,10 @@ class BackupObject(models.Model):
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     last_backup =  models.DateTimeField(blank=True, null=True)
-    changed_since_last_backup = models.BooleanField(default=True)
     modified = models.DateTimeField(blank=True, auto_now=True)   
 
 
     def backup(self, notes=None):
-        if not self.changed_since_last_backup:
-            return
-
         dt = datetime.datetime.now()
         name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'), int(time.time()), FORMAT)
 
@@ -64,8 +60,8 @@ class BackupObject(models.Model):
                 size=os.path.getsize(path),
                 notes=notes
             )
-     #   except IOError:
-      #      pass
+        except IOError:
+            pass
 
 
     def __unicode__(self):
@@ -96,5 +92,4 @@ def backup_all():
 
 from vz_backup.signals import *
 
-post_save.connect(update_backup_object, sender=BackupArchive)
 pre_delete.connect(unlink_archive, sender=BackupArchive)
