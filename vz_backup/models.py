@@ -13,6 +13,12 @@ import time
 INDENT = 4
 FORMAT = 'json'
 
+PRUNE_CHOICES = (
+    ('count', 'Count'),
+    ('size', 'Size'),
+    ('time', 'time')
+)
+
 class BackupObject(models.Model):
     """Backup Object
     
@@ -24,10 +30,24 @@ class BackupObject(models.Model):
     include = models.BooleanField(default=True, help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
     compress = models.BooleanField(default=True)
+    prune_by = models.CharField(max_length=4, choices=PRUNE_CHOICES, default='count',
+        help_text='What factor leads to archive file deletion?')
+    prune_value = models.CharField(blank=True, null=True, max_length='255', default='10')
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     last_backup =  models.DateTimeField(blank=True, null=True)
-    modified = models.DateTimeField(blank=True, auto_now=True)   
+    modified = models.DateTimeField(blank=True, auto_now=True)
+
+    def prune(self):
+        if self.prune_by == 'count':
+            count = int(self.prune_value)
+            if BackupArchive.objects.filter(backup_object=self, keep=False).count() > count:
+                last_backup = BackupArchive.objects.filter(backup_object=self, keep=False).only('created')[count-1]
+                BackupArchive.objects.filter(
+                    backup_object=self,
+                    keep=False,
+                    created__lt=last_backup.created
+                ).delete()
 
 
     def backup(self, notes=None):
@@ -83,6 +103,9 @@ class BackupArchive(models.Model):
 
     def __unicode__(self):
         return u"%s on %s" % (self.backup_object, self.created.isoformat())
+
+    class Meta:
+        ordering = ['-created']
 
 
 def backup_all():
