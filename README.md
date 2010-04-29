@@ -4,7 +4,7 @@ VZ Backup
 Django App for automagically backing up Models data.  Backups can be compressed, sent to ADMINS.
 
 TODO
-====
+----
 
 * Email
     * If-changed
@@ -16,18 +16,27 @@ TODO
     * From Command
 
 Models
-======
+------
 
-BackupObject
-------------
+### BackupObject
+
 
 A backup manager for an app.
 
-Management Commands
-===================
+Pruning based on count, size, time.
 
-add_to_backups
-----------------
+#### Count
+
+#### Size
+
+### Time
+
+
+Management Commands
+-------------------
+
+### add_to_backups
+
 
 `./manage.py add_to_backups widget`
 
