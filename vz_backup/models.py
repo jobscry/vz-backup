@@ -58,11 +58,15 @@ class BackupObject(models.Model):
             qs = BackupArchive.objects.filter(backup_object=self,
                 keep=False).aggregate(Sum('size'))
             size = qs['size__sum']
+            ids = list()
+            start = 0
             while size > max_size:
-                archive = BackupArchive.objects.filter(
-                    backup_object=self).order_by('created')[0]
+                archive = BackupArchive.objects.filter(backup_object=self).only(
+                    'id', 'size', 'created').order_by('created')[start]
+                ids.append(archive.id)
+                start = start + 1
                 size = size - archive.size
-                archive.delete()
+            BackupArchive.objects.filter(id__in=ids).delete()
 
     def backup(self, notes=None):
         dt = datetime.datetime.now()
