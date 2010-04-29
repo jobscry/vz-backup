@@ -51,6 +51,12 @@ def backup_now(modeladmin, request, queryset):
 backup_now.short_description = 'Backup Selected Objects Now'
 
 
+def prune_now(modeladmin, request, queryset):
+    for bobj in queryset:
+        bobj.prune()
+prune_now.short_description = 'Prune Selected Objects Now'
+
+
 class BackupObjectAdmin(admin.ModelAdmin):
     list_display = (
         'app_label',
@@ -65,6 +71,7 @@ class BackupObjectAdmin(admin.ModelAdmin):
     readonly_fields = ('app_label', )
     actions = [
         backup_now,
+        prune_now,
         mark_compress,
         mark_no_compress,
         mark_include,
