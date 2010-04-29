@@ -61,8 +61,9 @@ class BackupObject(models.Model):
             ids = list()
             start = 0
             while size > max_size:
-                archive = BackupArchive.objects.filter(backup_object=self).only(
-                    'id', 'size', 'created').order_by('created')[start]
+                archive = BackupArchive.objects.filter(
+                    backup_object=self).only('id', 'size', 'created').order_by(
+                        'created')[start]
                 ids.append(archive.id)
                 start = start + 1
                 size = size - archive.size
