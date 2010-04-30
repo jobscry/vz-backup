@@ -32,7 +32,7 @@ class BackupObject(models.Model):
     include = models.BooleanField(default=True,
         help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
-    compress = models.BooleanField(default=True)
+    compress = models.BooleanField(default=False)
     prune_by = models.CharField(max_length=4, choices=PRUNE_CHOICES,
         default='count',
         help_text='What factor leads to archive file deletion?')
