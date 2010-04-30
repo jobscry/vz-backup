@@ -17,6 +17,16 @@ TODO
     * From Admin Site
     * From Command
 
+Settings
+--------
+
+**VZ_BACKUP_DIR** - required, full path to directory for backup archive files
+
+**VZ_BACKUP_INDENT** - optional, default is 4, see [Django documentation](http://docs.djangoproject.com/en/dev/ref/django-admin/#djadminopt---format)
+
+**VZ_BACKUP_FORMAT** - optional, default is json, see [Django documentation](http://docs.djangoproject.com/en/dev/ref/django-admin/#djadminopt---indent)
+
+
 Models
 ------
 
