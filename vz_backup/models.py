@@ -11,8 +11,17 @@ import gzip
 import os
 import time
 
-INDENT = 4
-FORMAT = 'json'
+from vz_backup import exceptions
+
+try:
+    INDENT = settings.VZ_BACKUP_INDENT
+except AttributeError:
+    INDENT = 4
+
+try:
+    FORMAT = settings.VZ_BACKUP_FORMAT
+except AttributeError:
+    FORMAT = 'json'
 
 PRUNE_CHOICES = (
     ('count', 'Count'),
@@ -22,10 +31,10 @@ PRUNE_CHOICES = (
 
 
 class BackupObject(models.Model):
-    """Backup Object
+    """
+    Backup Object
 
     App to be backed up.  All apps from INSTALLED APPS are added upon `syncdb`.
-
     """
 
     app_label = models.CharField(blank=True, max_length=100, unique=True)
@@ -36,42 +45,70 @@ class BackupObject(models.Model):
     prune_by = models.CharField(max_length=4, choices=PRUNE_CHOICES,
         default='count',
         help_text='What factor leads to archive file deletion?')
-    prune_value = models.CharField(blank=True, null=True, max_length='255',
+    prune_value = models.PositiveIntegerField(blank=True, null=True,
         default='10')
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
 
     def prune(self):
+        """
+        Prune
+        
+        Depends on prune_by.
+        
+        If prune_by is "count", prune_value is number of BackupArhchives to keep.
+        Find totalBackupArchives for this BackupObject that are not marked "keep".
+        Delete all BackupArchives not marked "keep" for BackupObject older than
+        BackupArchives[count-1].
+        
+        If prune_by is "size", prune_value is total size of BackupArchive files not
+        marked "keep" in bytes.  If total is greater than prune_value, get ids of
+        BackupArchives where size of this list - total is less than prune_value.
+        Delete BackupArchives with selected ids.
+        
+        If prune_by is "time", prune_value is number of days to keep BackupArchive
+        files not marked "keep".  Find all BackupArchives older than today - prune_value,
+        delete them.
+        """
+        try:
+            prune_value = int(self.prune_value)
+        except TypeError:
+            raise PruneValueShouldBeAnInteger
+
         if self.prune_by == 'count':
-            count = int(self.prune_value)
+
             if BackupArchive.objects.filter(backup_object=self,
                 keep=False).count() > count:
                 last_backup = BackupArchive.objects.filter(backup_object=self,
-                    keep=False).only('created')[count-1]
+                    keep=False).only('created')[prune_value-1]
                 BackupArchive.objects.filter(
                     backup_object=self,
                     keep=False,
                     created__lt=last_backup.created).delete()
+
         elif self.prune_by == 'size':
-            max_size = int(self.prune_value)
+
             qs = BackupArchive.objects.filter(backup_object=self,
                 keep=False).aggregate(Sum('size'))
             size = qs['size__sum']
             ids = list()
             start = 0
-            while size > max_size:
+            while size > prune_value:
                 archive = BackupArchive.objects.filter(
-                    backup_object=self).only('id', 'size', 'created').order_by(
-                        'created')[start]
+                    backup_object=self, keep=False).only(
+                    'id', 'size', 'created').order_by('created')[start]
                 ids.append(archive.id)
                 start = start + 1
                 size = size - archive.size
             BackupArchive.objects.filter(id__in=ids).delete()
+
         elif self.prune_by == 'time':
-            delta = datetime.timedelta(days=int(self.prune_value))
+
+            delta = datetime.timedelta(days=prune_value)
             threshold = datetime.today() - delta
-            BackupArchive.objects.filter(backup_object=self, keep=False, created__lt=threshold).delete()
+            BackupArchive.objects.filter(
+                backup_object=self, keep=False, created__lt=threshold).delete()
 
     def backup(self, notes=None):
         dt = datetime.datetime.now()
