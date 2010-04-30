@@ -68,6 +68,10 @@ class BackupObject(models.Model):
                 start = start + 1
                 size = size - archive.size
             BackupArchive.objects.filter(id__in=ids).delete()
+        elif self.prune_by == 'time':
+            delta = datetime.timedelta(days=int(self.prune_value))
+            threshold = datetime.today() - delta
+            BackupArchive.objects.filter(backup_object=self, keep=False, created__lt=threshold).delete()
 
     def backup(self, notes=None):
         dt = datetime.datetime.now()
