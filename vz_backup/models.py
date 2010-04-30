@@ -34,7 +34,7 @@ class BackupObject(models.Model):
     """
     Backup Object
 
-    App to be backed up.  All apps from INSTALLED APPS are added upon `syncdb`.
+    Manages app backups.  Apps are added via management command.
     """
 
     app_label = models.CharField(blank=True, max_length=100, unique=True)
