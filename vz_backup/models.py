@@ -11,6 +11,7 @@ import os
 import time
 
 from vz_backup import exceptions
+from vz_backup.signals import unlink_archive, check_auto_prune
 
 try:
     INDENT = settings.VZ_BACKUP_INDENT
@@ -52,6 +53,8 @@ class BackupObject(models.Model):
         help_text='What factor leads to archive file deletion?')
     prune_value = models.PositiveIntegerField(blank=True, null=True,
         default=10)
+    auto_prune = models.BooleanField(default=False,
+        help_text="Prune after backup?")
     send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
@@ -155,7 +158,6 @@ class BackupObject(models.Model):
     def __unicode__(self):
         return self.app_label
 
-
 class BackupArchive(models.Model):
     """Backup Archive"""
 
@@ -180,6 +182,5 @@ def backup_all():
     for b in bs:
         b.backup()
 
-from vz_backup.signals import *
-
 pre_delete.connect(unlink_archive, sender=BackupArchive)
+post_save.connect(check_auto_prune, sender=BackupArchive)

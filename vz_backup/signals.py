@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+
 from django.db.models.signals import post_save, post_syncdb
-from vz_backup.models import BackupObject
 
 import os
 
@@ -15,3 +15,7 @@ def unlink_archive(sender, instance, **kwargs):
         os.unlink(instance.path)
     except OSError:
         pass
+
+def check_auto_prune(sender, instance, created, **kwargs):
+    if created and instance.backup_object.auto_prune:
+        instance.backup_object.prune()

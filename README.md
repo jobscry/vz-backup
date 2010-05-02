@@ -51,6 +51,8 @@ A backup manager for an app.
 
 **prune_value** - positive integer, see **prune_by**
 
+**auto_prune** - boolean, auto prune after each backup?
+
 **send_to_admins** - boolean, email new archives to admins?
 
 **created** - datetime
