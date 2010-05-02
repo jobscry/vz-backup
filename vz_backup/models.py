@@ -7,7 +7,6 @@ from django.db.models import Sum
 from django.db.models.signals import post_save, pre_delete
 
 import datetime
-import gzip
 import os
 import time
 
@@ -29,6 +28,12 @@ PRUNE_CHOICES = (
     ('time', 'Time'),
 )
 
+COMPRESS_CHOICES = (
+    ('bz2', 'bz2'),
+    ('gz', 'gz'),
+    ('none', 'none'),
+)
+
 
 class BackupObject(models.Model):
     """
@@ -41,7 +46,7 @@ class BackupObject(models.Model):
     include = models.BooleanField(default=True,
         help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
-    compress = models.BooleanField(default=False)
+    compress = models.CharField(max_length=4, choices=COMPRESS_CHOICES, default='none')
     prune_by = models.CharField(max_length=4, choices=PRUNE_CHOICES,
         default='count',
         help_text='What factor leads to archive file deletion?')
@@ -116,21 +121,29 @@ class BackupObject(models.Model):
         name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'),
             int(time.time()), FORMAT)
 
-        if self.compress:
+        if self.compress == 'gz':
+            from gzip import GzipFile
             name = name + u'.gz'
+        elif self.compress == 'bz2':
+            from bz2 import BZ2File
+            name = name + u'.bz2'
 
         path = os.path.join(settings.VZ_BACKUP_DIR, name)
         try:
-            if self.compress:
-                b_file = gzip.open(path, 'wb')
+            if self.compress == 'gz':
+                b_file = GzipFile(path, 'wb')
+            elif self.compress == 'bz2':
+                b_file = BZ2File(path, 'w')
             else:
                 b_file = open(path, 'w')
+
             dump = dumpdata.Command()
             b_file.write(dump.handle(
                     self.app_label,
                     use_natural_keys=self.use_natural_keys,
                     indent=INDENT,
                     format=FORMAT))
+
             b_file.close()
             BackupArchive.objects.create(
                 backup_object=self,
@@ -138,6 +151,7 @@ class BackupObject(models.Model):
                 path=path,
                 size=os.path.getsize(path),
                 notes=notes)
+
         except IOError:
             pass
 
