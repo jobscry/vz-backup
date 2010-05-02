@@ -68,26 +68,22 @@ class BackupObject(models.Model):
         "keep" for BackupObject older than BackupArchives[count-1].
 
         If prune_by is "size", prune_value is total size of
-        BackupArchive files not marked "keep" in bytes.  If total is
-        greater than prune_value, get ids of BackupArchives where size
-        of this list - total is less than prune_value.  Delete
+        BackupArchive files not marked "keep" in kilo bytes.  If total
+        is greater than prune_value, get ids of BackupArchives where
+        size of this list - total is less than prune_value.  Delete
         BackupArchives with selected ids.
 
         If prune_by is "time", prune_value is number of days to keep
         BackupArchive files not marked "keep".  Find all BackupArchives
         older than today - prune_value, delete them.
         """
-        try:
-            prune_value = int(self.prune_value)
-        except TypeError:
-            raise PruneValueShouldBeAnInteger
 
         if self.prune_by == 'count':
 
             if BackupArchive.objects.filter(backup_object=self,
                 keep=False).count() > count:
                 last_backup = BackupArchive.objects.filter(backup_object=self,
-                    keep=False).only('created')[prune_value-1]
+                    keep=False).only('created')[self.prune_value-1]
                 BackupArchive.objects.filter(
                     backup_object=self,
                     keep=False,
@@ -95,6 +91,7 @@ class BackupObject(models.Model):
 
         elif self.prune_by == 'size':
 
+            prune_value = self.prune_value * 1000
             qs = BackupArchive.objects.filter(backup_object=self,
                 keep=False).aggregate(Sum('size'))
             size = qs['size__sum']
@@ -111,7 +108,7 @@ class BackupObject(models.Model):
 
         elif self.prune_by == 'time':
 
-            delta = datetime.timedelta(days=prune_value)
+            delta = datetime.timedelta(days=self.prune_value)
             threshold = datetime.today() - delta
             BackupArchive.objects.filter(
                 backup_object=self, keep=False, created__lt=threshold).delete()
