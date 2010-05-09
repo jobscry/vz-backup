@@ -161,14 +161,14 @@ class BackupObject(models.Model):
 class BackupArchive(models.Model):
     """Backup Archive"""
 
-    backup_object = models.ForeignKey(BackupObject)
-    name = models.CharField(blank=True, max_length=100)
-    path = models.FilePathField(path=settings.VZ_BACKUP_DIR)
-    size = models.BigIntegerField(default=0)
+    backup_object = models.ForeignKey(BackupObject, editable=False)
+    name = models.CharField(blank=True, max_length=100, editable=False)
+    path = models.FilePathField(path=settings.VZ_BACKUP_DIR, editable=False)
+    size = models.BigIntegerField(default=0, editable=False)
     notes = models.TextField(blank=True, null=True, default='')
     keep = models.BooleanField(default=False)
-    edited = models.DateTimeField(blank=True, auto_now=True)
-    created = models.DateTimeField(blank=True, auto_now_add=True)
+    edited = models.DateTimeField(blank=True, auto_now=True, editable=False)
+    created = models.DateTimeField(blank=True, auto_now_add=True, editable=False)
 
     def __unicode__(self):
         return u"%s on %s" % (self.backup_object, self.created.isoformat())
