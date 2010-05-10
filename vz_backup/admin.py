@@ -5,11 +5,6 @@ from django.db.models import Sum
 from vz_backup.models import BackupObject, BackupArchive
 
 
-class BackupArchiveInline(admin.StackedInline):
-    model = BackupArchive
-    extra = 0
-
-
 def mark_include(modeladmin, request, queryset):
     queryset.update(include=True)
 mark_include.short_description = 'Enable Backup (include) on Selected Objects'
@@ -82,9 +77,7 @@ class BackupObjectAdmin(admin.ModelAdmin):
         mark_send_to_admins,
         mark_no_send_to_admins,
     ]
-    inlines = [
-        BackupArchiveInline,
-    ]
+
 
     def backup_size(self, obj):
         qs = BackupArchive.objects.filter(

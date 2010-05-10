@@ -1,0 +1,5 @@
+{% for archive in archives %}
+	<h4>{{ archive.created|date }}</h4>
+	<p>{{ archive.size|filesizeformat }}</p>
+	<p>{{ archive.path }}</p>
+{% endfor %}
