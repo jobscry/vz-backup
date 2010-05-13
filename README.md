@@ -15,7 +15,7 @@ TODO
     * From Admin Site
     * From Command
 
-![admin integration](http://github.com/jobscry/vz-backup/blob/master/screenshots/admin.png "admin integration")
+![admin integration](http://github.com/jobscry/vz-backup/raw/master/screenshots/admin.png "admin integration")
 
 Settings
 --------
