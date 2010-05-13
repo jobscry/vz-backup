@@ -9,13 +9,13 @@ TODO
 ----
 
 * Email
-    * If-changed
-* Size Experimentation
-* Auto/Manual Pruning
-* Download
+* <del>Auto/Manual Pruning</del>
+* <del>Download</del>
 * Re-load 
     * From Admin Site
     * From Command
+
+![admin integration](http://github.com/jobscry/vz-backup/blob/master/screenshots/admin.png "admin integration")
 
 Settings
 --------
@@ -78,3 +78,15 @@ Management Commands
 `./manage.py add_to_backups widget`
 
 This creates a BackupObject for the widget app.
+
+Admin Site Integration
+----------------------
+
+### Extras in *js* and *css* Directories
+
+* [Tablesorter](http://tablesorter.com/) and [jQuery](http://jquery.com) libraries
+* vz_backup_tablesorter.js 
+* vz_backup.css 
+
+Adding the preceding items to your media directory will sort functionality to a *nicely* integrated BackupArchive control 
+panel.
