@@ -11,6 +11,12 @@ import os
 
 @permission_required(lambda u: u.has_perm('backuparchive.can_change'))
 def download_archive(request, id):
+    """
+    Download Archive
+    
+    If backup archive with *id* exists and user had change permissions
+    download file based on *send_file* setting.
+    """
     try:
         archive = BackupArchive.objects.select_related().get(id__exact=id)
     except BackupArchive.DoesNotExist:
