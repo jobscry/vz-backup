@@ -10,7 +10,7 @@ import datetime
 import os
 import time
 
-from vz_backup import exceptions
+from vz_backup.exceptions import UnableToCreateArchive
 from vz_backup.signals import unlink_archive, check_auto_prune
 
 INDENT = getattr(settings, 'VZ_BACKUP_INDENT', 4)
@@ -146,7 +146,7 @@ class BackupObject(models.Model):
                 notes=notes)
 
         except IOError:
-            pass
+            raise UnableToCreateArchive
 
 
     def __unicode__(self):
