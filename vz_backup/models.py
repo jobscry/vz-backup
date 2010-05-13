@@ -13,15 +13,8 @@ import time
 from vz_backup import exceptions
 from vz_backup.signals import unlink_archive, check_auto_prune
 
-try:
-    INDENT = settings.VZ_BACKUP_INDENT
-except AttributeError:
-    INDENT = 4
-
-try:
-    FORMAT = settings.VZ_BACKUP_FORMAT
-except AttributeError:
-    FORMAT = 'json'
+INDENT = getattr(settings, VZ_BACKUP_INDENT, 4)
+FORMAT = getattr(settings, VZ_BACKUP_FORMAT, 'json')
 
 PRUNE_CHOICES = (
     ('count', 'Count'),
