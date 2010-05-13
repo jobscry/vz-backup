@@ -26,6 +26,15 @@ Settings
 
 **VZ_BACKUP_FORMAT** - optional, default is json, see [Django documentation](http://docs.djangoproject.com/en/dev/ref/django-admin/#djadminopt---indent)
 
+**VZ_BACKUP_SEND_FILE** - optional, how to *send* the file upon download from admin interface.  
+This can be either:
+
+* None (default), this will use the [Django FileWrapper class](http://code.djangoproject.com/browser/django/trunk/django/core/servers/basehttp.py#L32), 
+this is not the best way to do this
+* x-accel-redirect (for Nginx) see the [Nginx docs](http://wiki.nginx.org/NginxXSendfile)
+* x-send-file (for Apache with mod_xsendfile) see the 
+[mod_xsendfile docs](http://tn123.ath.cx/mod_xsendfile/)
+
 
 Models
 ------
@@ -58,6 +67,7 @@ A backup manager for an app.
 **created** - datetime
 
 **modified** - datetime
+
 
 Management Commands
 -------------------
