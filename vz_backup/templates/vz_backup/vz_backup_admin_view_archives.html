@@ -1,5 +1,33 @@
+{% load vz_backup_admin_tags %}
+
+<table id="vz_backup_ba_table" class="tablesorter" width="100%">
+	<thead>
+		<tr>
+			<th class="sorter" scope="col">#</th>
+			<th class="sorter" scope="col">Date Created</th>
+			<th class="sorter" scope="col">Name</th>
+			<th class="sorter" scope="col">Size</th>
+			<th class="sorter" scope="col">Kept</th>
+			<th scope="col">Actions</th>
+		</tr>
+	</thead>
+	<tbody>
 {% for archive in archives %}
-	<h4>{{ archive.created|date }}</h4>
-	<p>{{ archive.size|filesizeformat }}</p>
-	<p><a href="{% url vz_backup_download_archive archive.id %}" title="download this archive">{{ archive.name }}</a></p>
+		<tr class="{% cycle 'row1' 'row2' %}">
+			<th scope="row">{{ forloop.counter }}</th>
+			<td>{{ archive.created|date }}</td>
+			<td>{{ archive.name }}</td>
+			<td>{{ archive.size|filesizeformat }}</td>
+			<td>{{ archive.keep|bool_icon }}</td>
+			<td>
+				<a href="{% url vz_backup_download_archive archive.id %}" title="download this archive">download</a> | 
+	{% if archive.keep %}
+				<a href="{% url vz_backup_keep_archive "unkeep",archive.id %}" title="unkeep this archive">unkeep</a>
+	{% else %}
+				<a href="{% url vz_backup_keep_archive "keep",archive.id %}" title="keep this archive">keep</a>
+	{% endif %}
+			</td>
+		</tr>
 {% endfor %}
+	</tbody>
+</table>

@@ -53,6 +53,12 @@ prune_now.short_description = 'Prune Selected Objects Now'
 
 
 class BackupObjectAdmin(admin.ModelAdmin):
+    class Media:
+        css = {
+            'all': ('css/vz_backup.css',)
+        }
+        js = ('js/jquery.js', 'js/jquery.tablesorter.js', 'js/vz_backup_tablesorter.js', )
+
     list_display = (
         'app_label',
         'include',

@@ -1,0 +1,6 @@
+.tablesorter th.ts_ascending {
+    background: url("../img/admin/arrow-down.gif") no-repeat scroll right 0.4em transparent
+}
+.tablesorter th.ts_descending {
+    background: url("../img/admin/arrow-up.gif") no-repeat scroll right 0.4em transparent
+}

@@ -13,8 +13,8 @@ import time
 from vz_backup import exceptions
 from vz_backup.signals import unlink_archive, check_auto_prune
 
-INDENT = getattr(settings, VZ_BACKUP_INDENT, 4)
-FORMAT = getattr(settings, VZ_BACKUP_FORMAT, 'json')
+INDENT = getattr(settings, 'VZ_BACKUP_INDENT', 4)
+FORMAT = getattr(settings, 'VZ_BACKUP_FORMAT', 'json')
 
 PRUNE_CHOICES = (
     ('count', 'Count'),
@@ -147,6 +147,7 @@ class BackupObject(models.Model):
 
         except IOError:
             pass
+
 
     def __unicode__(self):
         return self.app_label

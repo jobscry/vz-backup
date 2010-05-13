@@ -2,8 +2,10 @@
 
 from django.contrib.auth.decorators import permission_required
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import redirect
 from vz_backup.models import BackupArchive
 
 import mimetypes
@@ -50,3 +52,19 @@ def download_archive(request, id):
         response[k] = v
 
     return response
+
+@permission_required(lambda u: u.has_perm('backuparchive.can_change'))
+def keep_archive(request, action, id):
+    try:
+        archive = BackupArchive.objects.select_related().get(id__exact=id)
+    except BackupArchive.DoesNotExist:
+        return HttpResponseNotFound('Archive with this ID does not exist.')
+
+    if action == 'keep':
+        archive.keep = True
+    else:
+        archive.keep = False
+
+    archive.save()
+
+    return redirect(reverse('admin:vz_backup_backupobject_change', args=(archive.backup_object.id, )))
