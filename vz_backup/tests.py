@@ -167,7 +167,7 @@ class VZBackupTestCase(TestCase):
 
         #test download of an archive
         ba = BackupArchive.objects.get(id__exact=1)
-        response = self.client.get(reverse('vz_backup_download_archive', args=('1', )))
+        response = self.client.get(reverse('admin:vz_backup_download_archive', args=('1', )))
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(response.__getitem__('Content-Type'), mimetypes.guess_type(ba.path)[0])
         self.failUnlessEqual(response.__getitem__('Content-Disposition'), 'attachment; filename=%s'%ba.name)
@@ -185,16 +185,37 @@ class VZBackupTestCase(TestCase):
         self.client.login(username=self.user1.username, password=self.password)
 
         #test keep archive
-        response = self.client.get(reverse('vz_backup_keep_archive', args=('keep', '1')))
+        response = self.client.get(reverse('admin:vz_backup_keep_archive', args=('keep', '1')))
         self.failUnlessEqual(response.status_code, 302)
         ba = BackupArchive.objects.get(id__exact=1)
         self.assertTrue(ba.keep)
 
         #test unkeep archive
-        response = self.client.get(reverse('vz_backup_keep_archive', args=('unkeep', '1')))
+        response = self.client.get(reverse('admin:vz_backup_keep_archive', args=('unkeep', '1')))
         self.failUnlessEqual(response.status_code, 302)
         ba = BackupArchive.objects.get(id__exact=1)
         self.assertFalse(ba.keep)
+
+
+    def test_views_delete_archive(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+
+        #make user1 a superuser
+        self.user1.is_superuser = True
+        self.user1.save()
+
+        #login user1
+        self.client.login(username=self.user1.username, password=self.password)
+
+        #test delete archive
+        response = self.client.get(reverse('admin:vz_backup_delete_archive', args=('1',)))
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(BackupArchive.objects.count(), 1)
+        response = self.client.post(reverse('admin:vz_backup_delete_archive', args=('1',)))
+        self.failUnlessEqual(response.status_code, 302)
+        self.failUnlessEqual(BackupArchive.objects.count(), 0)
+
 
     def tearDown(self):
         #remove temp backup dir, reset to original path

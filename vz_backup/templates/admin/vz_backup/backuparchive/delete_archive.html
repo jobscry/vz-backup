@@ -1,0 +1,19 @@
+{% extends 'admin/base_site.html' %}
+
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="/admin/">{% trans "Home" %}</a> &gt; 
+<a href="{% url admin:app_list "vz_backup" %}">VZ Backup</a> &gt; 
+<a href="{% url admin:vz_backup_backupobject_changelist %}">Backup objects</a> &gt; 
+<a href="{% url admin:vz_backup_backupobject_change archive.backup_object.id %}">{{ archive.backup_object }}</a> &gt; 
+Delete Archive</div>
+{% endblock %}
+
+{% block content %}
+<h2>Please Confirm Deletion</h2>
+<p>You are about to <strong>permanently</strong> delete this archive.</p>
+<form method="post" action=".">
+{% csrf_token %}
+<p><a href="{% url admin:vz_backup_backupobject_change archive.backup_object.id %}">Cancel</a> or <input type="submit" value="Okay"></p>
+{% endblock %}

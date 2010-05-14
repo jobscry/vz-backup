@@ -2,7 +2,9 @@
 
 from django.contrib import admin
 from django.db.models import Sum
+from django.conf.urls.defaults import *
 from vz_backup.models import BackupObject, BackupArchive
+from vz_backup.views import delete_archive
 
 
 def backup_now(modeladmin, request, queryset):
@@ -42,7 +44,19 @@ class BackupObjectAdmin(admin.ModelAdmin):
         backup_now,
         prune_now,
     ]
+    save_on_top = True
 
+    def admin_delete_archive(self, request, id):
+        return delete_archive(request, self, id)
+
+    def get_urls(self):
+        urls = super(BackupObjectAdmin, self).get_urls()
+        my_urls = patterns('',
+            url(r'^download/(?P<id>\d+)/', 'vz_backup.views.download_archive', name='vz_backup_download_archive'),
+            url(r'^(?P<action>keep|unkeep)/(?P<id>\d+)/', 'vz_backup.views.keep_archive', name='vz_backup_keep_archive'),
+            url(r'^delete/(?P<id>\d+)/', self.admin_delete_archive, name='vz_backup_delete_archive'),
+        )
+        return my_urls + urls
 
     def backup_size(self, obj):
         qs = BackupArchive.objects.filter(

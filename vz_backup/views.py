@@ -1,17 +1,51 @@
 # -*- coding: utf-8 -*-
 
-from django.contrib.auth.decorators import permission_required
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render_to_response
+from django.template import RequestContext
 from vz_backup.models import BackupArchive
 
 import mimetypes
 import os
 
-@permission_required(lambda u: u.has_perm('backuparchive.can_change'))
+@permission_required('backuparchive.can_delete')
+def delete_archive(request, model_admin, id=None):
+    """
+    http://www.lonelycode.com/2009/05/28/customising-the-django-admin/
+    http://www.beardygeek.com/2010/03/adding-views-to-the-django-admin/
+    http://www.scribd.com/doc/24645813/Customizing-the-Django-Admin
+    """
+    try:
+        archive = BackupArchive.objects.select_related().get(id__exact=id)
+    except BackupArchive.DoesNotExist:
+        return HttpResponseNotFound('Archive with this ID does not exist.')
+
+    opts = model_admin.model._meta
+    admin_site = model_admin.admin_site
+    has_perm = request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
+
+    if request.method == 'POST':
+        bo = archive.backup_object
+        archive.delete()
+        request.user.message_set.create(message='Deleted archive')
+        return redirect(reverse('admin:vz_backup_backupobject_change', args=(bo.id, )))
+
+    context = {
+        'archive': archive,
+        'admin_site': admin_site.name,
+        'title': 'Delete Archive',
+        'opts':opts,
+        'root_path': '/%s' % admin_site.root_path,
+        'app_label' : opts.app_label,
+        'has_change_permission':has_perm}
+    template = 'admin/vz_backup/backuparchive/delete_archive.html'
+    return render_to_response(template, context, context_instance=RequestContext(request))
+
+@permission_required('backuparchive.can_change')
 def download_archive(request, id):
     """
     Download Archive
@@ -53,7 +87,7 @@ def download_archive(request, id):
 
     return response
 
-@permission_required(lambda u: u.has_perm('backuparchive.can_change'))
+@permission_required('backuparchive.can_change')
 def keep_archive(request, action, id):
     try:
         archive = BackupArchive.objects.select_related().get(id__exact=id)
