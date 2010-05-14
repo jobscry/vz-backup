@@ -52,6 +52,11 @@ class BackupObject(models.Model):
     created = models.DateTimeField(blank=True, auto_now_add=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
 
+
+    def __unicode__(self):
+        return self.app_label
+
+
     def prune(self):
         """
         Prune
@@ -149,9 +154,6 @@ class BackupObject(models.Model):
             raise UnableToCreateArchive
 
 
-    def __unicode__(self):
-        return self.app_label
-
 class BackupArchive(models.Model):
     """Backup Archive"""
 
@@ -164,11 +166,13 @@ class BackupArchive(models.Model):
     edited = models.DateTimeField(blank=True, auto_now=True, editable=False)
     created = models.DateTimeField(blank=True, auto_now_add=True, editable=False)
 
-    def __unicode__(self):
-        return u"%s on %s" % (self.backup_object, self.created.isoformat())
 
     class Meta:
         ordering = ['-created']
+
+
+    def __unicode__(self):
+        return u"%s on %s" % (self.backup_object, self.created.isoformat())
 
 
 def backup_all():
