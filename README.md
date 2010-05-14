@@ -27,7 +27,7 @@ Screenshots
 ![admin detail 02](http://github.com/jobscry/vz-backup/raw/master/screenshots/admin-detail02.png "admin detail 02")
 
 
-![admin detail 03](http://github.com/jobscry/vz-backup/raw/master/screenshots/admin-detail02.png "admin detail 03")
+![admin detail 03](http://github.com/jobscry/vz-backup/raw/master/screenshots/admin-detail03.png "admin detail 03")
 
 Settings
 --------
