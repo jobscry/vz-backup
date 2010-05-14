@@ -5,29 +5,6 @@ from django.db.models import Sum
 from vz_backup.models import BackupObject, BackupArchive
 
 
-def mark_include(modeladmin, request, queryset):
-    queryset.update(include=True)
-mark_include.short_description = 'Enable Backup (include) on Selected Objects'
-
-
-def mark_no_include(modeladmin, request, queryset):
-    queryset.update(include=False)
-mark_no_include.short_description = 'Disable Backup (include) on \
-    Selected Objects'
-
-
-def mark_use_natural_keys(modeladmin, request, queryset):
-    queryset.update(use_natural_keys=True)
-mark_use_natural_keys.short_description = 'Use Natural Keys on \
-    Selected Objects'
-
-
-def mark_no_use_natural_keys(modeladmin, request, queryset):
-    queryset.update(use_natural_keys=False)
-mark_no_use_natural_keys.short_description = 'Do Not Use Natural Keys on \
-    Selected Objects'
-
-
 def backup_now(modeladmin, request, queryset):
     for bobj in queryset:
         bobj.backup()
@@ -51,6 +28,7 @@ class BackupObjectAdmin(admin.ModelAdmin):
         'app_label',
         'include',
         'compress',
+        'prune_by',
         'auto_prune',
         'backup_size',
         'number_of_archives',
@@ -63,10 +41,6 @@ class BackupObjectAdmin(admin.ModelAdmin):
     actions = [
         backup_now,
         prune_now,
-        mark_include,
-        mark_no_include,
-        mark_use_natural_keys,
-        mark_no_use_natural_keys,
     ]
 
 
