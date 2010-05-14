@@ -28,18 +28,6 @@ mark_no_use_natural_keys.short_description = 'Do Not Use Natural Keys on \
     Selected Objects'
 
 
-def mark_send_to_admins(modeladmin, request, queryset):
-    queryset.update(send_to_admins=True)
-mark_send_to_admins.short_description = 'Send Backups of Selected Objects \
-    to Admins'
-
-
-def mark_no_send_to_admins(modeladmin, request, queryset):
-    queryset.update(send_to_admins=False)
-mark_no_send_to_admins.short_description = 'Do Not Send Backups of Selected \
-    Objects to Admins'
-
-
 def backup_now(modeladmin, request, queryset):
     for bobj in queryset:
         bobj.backup()
@@ -64,7 +52,6 @@ class BackupObjectAdmin(admin.ModelAdmin):
         'include',
         'compress',
         'auto_prune',
-        'send_to_admins',
         'backup_size',
         'number_of_archives',
         'kept_archives',
@@ -80,8 +67,6 @@ class BackupObjectAdmin(admin.ModelAdmin):
         mark_no_include,
         mark_use_natural_keys,
         mark_no_use_natural_keys,
-        mark_send_to_admins,
-        mark_no_send_to_admins,
     ]
 
 

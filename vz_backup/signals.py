@@ -20,3 +20,8 @@ def unlink_archive(sender, instance, **kwargs):
 def check_auto_prune(sender, instance, created, **kwargs):
     if created and instance.backup_object.auto_prune:
         instance.backup_object.prune()
+
+
+def check_mail_to(sender, instance, created, **kwargs):
+    if created:
+        instance.backup_object.mail_latest()

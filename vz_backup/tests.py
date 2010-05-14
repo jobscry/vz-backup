@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -125,6 +126,23 @@ class VZBackupTestCase(TestCase):
         self.assertEqual(BackupArchive.objects.filter(backup_object=bo).count(), 2)
         ba5 = BackupArchive.objects.filter(keep=False)[0]
         self.assertNotEqual(ba4.id, ba5.id)
+
+    def test_models_mail_to(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+
+        #get auth app backup object
+        bo = BackupObject.objects.get(id__exact=1)
+
+        #test empty mail_to
+        bo.mail_latest(fail_silently=True)
+        self.assertEquals(len(mail.outbox), 0)
+
+        #test mail_to with user1
+        bo.mail_to.add(self.user1)
+        bo.mail_latest(fail_silently=True)
+        self.assertEquals(len(mail.outbox), 1)
+        
     
     def test_views_download_archive(self):
         #add auth app to backups

@@ -69,6 +69,8 @@ A backup manager for an app.
 
 **auto_prune** - boolean, auto prune after each backup?
 
+**mail_to** - optional, manytomany (User), list of admins to send new backups to
+
 **created** - datetime
 
 **modified** - datetime

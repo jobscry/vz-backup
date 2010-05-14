@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
 from django.core.management.commands import dumpdata
 from django.db import models
 from django.db.models import Sum
 from django.db.models.signals import post_save, pre_delete
 
 import datetime
+import mimetypes
 import os
 import time
 
 from vz_backup.exceptions import UnableToCreateArchive
-from vz_backup.signals import unlink_archive, check_auto_prune
+from vz_backup.signals import check_auto_prune, check_mail_to, unlink_archive
 
 INDENT = getattr(settings, 'VZ_BACKUP_INDENT', 4)
 FORMAT = getattr(settings, 'VZ_BACKUP_FORMAT', 'json')
@@ -48,6 +51,8 @@ class BackupObject(models.Model):
         default=10)
     auto_prune = models.BooleanField(default=False,
         help_text="Prune after backup?")
+    mail_to = models.ManyToManyField(User, limit_choices_to={'is_superuser': True}, 
+        blank=True, null=True, default='', help_text='Select which admin(s) to send new backup archives to.')
     created = models.DateTimeField(blank=True, auto_now_add=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
 
@@ -153,6 +158,17 @@ class BackupObject(models.Model):
             raise UnableToCreateArchive
 
 
+    def mail_latest(self, fail_silently=False):
+        if self.mail_to.count() > 0:
+            message = EmailMessage(
+                subject=u'%s backup manager %s'%(settings.EMAIL_SUBJECT_PREFIX, self),
+                to=self.mail_to.values_list('email', flat=True)
+            )
+            ba = BackupArchive.objects.filter(backup_object=self).only('backup_object', 'path', 'created').latest()
+            message.attach_file(ba.path, mimetypes.guess_type(ba.path)[0])
+            message.send()
+
+
 class BackupArchive(models.Model):
     """Backup Archive"""
 
@@ -168,6 +184,7 @@ class BackupArchive(models.Model):
 
     class Meta:
         ordering = ['-created']
+        get_latest_by = 'created'
 
 
     def __unicode__(self):
@@ -181,3 +198,4 @@ def backup_all():
 
 pre_delete.connect(unlink_archive, sender=BackupArchive)
 post_save.connect(check_auto_prune, sender=BackupArchive)
+post_save.connect(check_mail_to, sender=BackupArchive)
