@@ -77,7 +77,7 @@ class BackupObject(models.Model):
         if self.prune_by == 'count':
 
             if BackupArchive.objects.filter(backup_object=self,
-                keep=False).count() > count:
+                keep=False).count() > self.prune_value:
                 last_backup = BackupArchive.objects.filter(backup_object=self,
                     keep=False).only('created')[self.prune_value-1]
                 BackupArchive.objects.filter(
@@ -105,7 +105,7 @@ class BackupObject(models.Model):
         elif self.prune_by == 'time':
 
             delta = datetime.timedelta(days=self.prune_value)
-            threshold = datetime.today() - delta
+            threshold = datetime.date.today() - delta
             BackupArchive.objects.filter(
                 backup_object=self, keep=False, created__lt=threshold).delete()
 
