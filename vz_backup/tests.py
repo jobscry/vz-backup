@@ -55,6 +55,7 @@ class VZBackupTestCase(TestCase):
         bo.backup()
         self.assertEqual(BackupArchive.objects.filter(backup_object=bo).count(), 1)
         ba = BackupArchive.objects.all()[0]
+        self.failUnlessEqual('auth', bo.__unicode__())
         ba.delete()
 
         #test backup of auth app with bz2 compression, default format
