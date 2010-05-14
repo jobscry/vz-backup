@@ -3,27 +3,30 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from vz_backup.models import BackupObject, BackupArchive
 
 import datetime
+import mimetypes
 import os
 import shutil
 import tempfile
 
-class VZBackupModelsTestCase(TestCase):
+class VZBackupTestCase(TestCase):
     def setUp(self):
         #create three users
-        self.user1 = User.objects.create(username='testUser1', password='testUser')
-        self.user2 = User.objects.create(username='testUser2', password='testUser')
-        self.user3 = User.objects.create(username='testUser3', password='testUser')
+        self.password = 'testUser'
+        self.user1 = User.objects.create_user('testUser1', 'testUser1@test.com', self.password)
+        self.user2 = User.objects.create_user('testUser2', 'testUser2@test.com', self.password)
+        self.user3 = User.objects.create_user('testUser3', 'testUser1@test.com', self.password)
 
         #create a temp directory for backup archives
         self.old_backup_dir = settings.VZ_BACKUP_DIR
         settings.VZ_BACKUP_DIR = tempfile.mkdtemp()
 
 
-    def test_management_commands(self):
+    def test_models_management_commands(self):
         #add auth app to backups
         call_command('add_to_backups', 'auth')
 
@@ -39,9 +42,9 @@ class VZBackupModelsTestCase(TestCase):
         ba = BackupArchive.objects.all()
 
 
-    def test_backup(self):
+    def test_models_backup(self):
         #add auth app to backups
-        self.test_management_commands()
+        call_command('add_to_backups', 'auth')
 
         #get auth backup object, delete initial backup archive
         bo = BackupObject.objects.get(id__exact=1)
@@ -68,7 +71,7 @@ class VZBackupModelsTestCase(TestCase):
         ba = BackupArchive.objects.all()[0]
 
 
-    def test_prune(self):
+    def test_models_prune(self):
         #add auth app to backups
         call_command('add_to_backups', 'auth')
 
@@ -121,6 +124,48 @@ class VZBackupModelsTestCase(TestCase):
         self.assertEqual(BackupArchive.objects.filter(backup_object=bo).count(), 2)
         ba5 = BackupArchive.objects.filter(keep=False)[0]
         self.assertNotEqual(ba4.id, ba5.id)
+    
+    def test_views_download_archive(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+
+        #make user1 a superuser
+        self.user1.is_superuser = True
+        self.user1.save()
+
+        #login user1
+        self.client.login(username=self.user1.username, password=self.password)
+
+        #test download of an archive
+        ba = BackupArchive.objects.get(id__exact=1)
+        response = self.client.get(reverse('vz_backup_download_archive', args=('1', )))
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.__getitem__('Content-Type'), mimetypes.guess_type(ba.path)[0])
+        self.failUnlessEqual(response.__getitem__('Content-Disposition'), 'attachment; filename=%s'%ba.name)
+
+
+    def test_views_keep_archive(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+
+        #make user1 a superuser
+        self.user1.is_superuser = True
+        self.user1.save()
+
+        #login user1
+        self.client.login(username=self.user1.username, password=self.password)
+
+        #test keep archive
+        response = self.client.get(reverse('vz_backup_keep_archive', args=('keep', '1')))
+        self.failUnlessEqual(response.status_code, 302)
+        ba = BackupArchive.objects.get(id__exact=1)
+        self.assertTrue(ba.keep)
+
+        #test unkeep archive
+        response = self.client.get(reverse('vz_backup_keep_archive', args=('unkeep', '1')))
+        self.failUnlessEqual(response.status_code, 302)
+        ba = BackupArchive.objects.get(id__exact=1)
+        self.assertFalse(ba.keep)
 
     def tearDown(self):
         #remove temp backup dir, reset to original path
