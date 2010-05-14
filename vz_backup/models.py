@@ -48,7 +48,6 @@ class BackupObject(models.Model):
         default=10)
     auto_prune = models.BooleanField(default=False,
         help_text="Prune after backup?")
-    send_to_admins = models.BooleanField(default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
     modified = models.DateTimeField(blank=True, auto_now=True)
 

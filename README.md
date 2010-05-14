@@ -69,8 +69,6 @@ A backup manager for an app.
 
 **auto_prune** - boolean, auto prune after each backup?
 
-**send_to_admins** - boolean, email new archives to admins?
-
 **created** - datetime
 
 **modified** - datetime
