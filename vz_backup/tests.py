@@ -6,7 +6,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from vz_backup.models import BackupObject, BackupArchive
+from vz_backup.models import backup_all, BackupObject, BackupArchive
 
 import datetime
 import mimetypes
@@ -49,8 +49,18 @@ class VZBackupTestCase(TestCase):
 
         #get auth backup object, delete initial backup archive
         bo = BackupObject.objects.get(id__exact=1)
-        ba = BackupArchive.objects.all()
-        ba.delete()
+        ba = BackupArchive.objects.all().delete()
+        
+        #test include switch
+        bo.include = False
+        bo.save()
+        backup_all()
+        self.failUnlessEqual(BackupArchive.objects.count(), 0)
+        bo.include = True
+        bo.save()
+        backup_all()
+        self.failUnlessEqual(BackupArchive.objects.count(), 1)
+        BackupArchive.objects.all().delete()
 
         #test backup of auth app with no compression, default format
         bo.backup()

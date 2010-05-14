@@ -192,7 +192,7 @@ class BackupArchive(models.Model):
 
 
 def backup_all():
-    bs = BackupObject.objects.all()
+    bs = BackupObject.objects.filter(include=True).all()
     for b in bs:
         b.backup()
 
