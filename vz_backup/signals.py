@@ -24,4 +24,4 @@ def check_auto_prune(sender, instance, created, **kwargs):
 
 def check_mail_to(sender, instance, created, **kwargs):
     if created:
-        instance.backup_object.mail_latest()
+        instance.backup_object.mail()

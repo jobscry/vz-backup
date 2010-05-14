@@ -55,6 +55,7 @@ class BackupObjectAdmin(admin.ModelAdmin):
             url(r'^download/(?P<id>\d+)/', 'vz_backup.views.download_archive', name='vz_backup_download_archive'),
             url(r'^(?P<action>keep|unkeep)/(?P<id>\d+)/', 'vz_backup.views.keep_archive', name='vz_backup_keep_archive'),
             url(r'^delete/(?P<id>\d+)/', self.admin_delete_archive, name='vz_backup_delete_archive'),
+            url(r'^mail/(?P<id>\d+)/', 'vz_backup.views.mail_archive', name='vz_backup_mail_archive'),
         )
         return my_urls + urls
 

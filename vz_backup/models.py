@@ -158,13 +158,17 @@ class BackupObject(models.Model):
             raise UnableToCreateArchive
 
 
-    def mail_latest(self, fail_silently=False):
+    def mail(self, which=None, fail_silently=True):
         if self.mail_to.count() > 0:
             message = EmailMessage(
                 subject=u'%s backup manager %s'%(settings.EMAIL_SUBJECT_PREFIX, self),
                 to=self.mail_to.values_list('email', flat=True)
             )
-            ba = BackupArchive.objects.filter(backup_object=self).only('backup_object', 'path', 'created').latest()
+            if which is None:
+                ba = BackupArchive.objects.filter(backup_object=self).only('backup_object', 'path', 'created').latest()
+            else:
+                ba = BackupArchive.objects.get(id__exact=which)
+
             message.attach_file(ba.path, mimetypes.guess_type(ba.path)[0])
             message.send()
 

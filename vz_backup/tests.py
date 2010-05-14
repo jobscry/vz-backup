@@ -27,7 +27,7 @@ class VZBackupTestCase(TestCase):
         settings.VZ_BACKUP_DIR = tempfile.mkdtemp()
 
 
-    def test_models_management_commands(self):
+    def test_management_add_to_backups(self):
         #add auth app to backups
         call_command('add_to_backups', 'auth')
 
@@ -41,6 +41,22 @@ class VZBackupTestCase(TestCase):
         #test to see if initial backup archive was created
         self.assertEqual(BackupArchive.objects.filter(backup_object=bo).count(), 1)
         ba = BackupArchive.objects.all()
+
+
+    def test_management_backup_all(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+        
+        #test backup all
+        call_command('backup_all')
+        self.failUnlessEqual(BackupArchive.objects.count(), 2)
+
+        #test backup all with no backup objects included
+        bo = BackupObject.objects.get(id__exact=1)
+        bo.include = False
+        bo.save()
+        call_command('backup_all')
+        self.failUnlessEqual(BackupArchive.objects.count(), 2)
 
 
     def test_models_backup(self):
@@ -145,13 +161,15 @@ class VZBackupTestCase(TestCase):
         bo = BackupObject.objects.get(id__exact=1)
 
         #test empty mail_to
-        bo.mail_latest(fail_silently=True)
+        bo.mail(fail_silently=True)
         self.assertEquals(len(mail.outbox), 0)
 
         #test mail_to with user1
         bo.mail_to.add(self.user1)
-        bo.mail_latest(fail_silently=True)
+        bo.mail(fail_silently=True)
         self.assertEquals(len(mail.outbox), 1)
+        bo.mail(1, fail_silently=True)
+        self.assertEquals(len(mail.outbox), 2)
         
     
     def test_views_download_archive(self):
@@ -215,6 +233,22 @@ class VZBackupTestCase(TestCase):
         response = self.client.post(reverse('admin:vz_backup_delete_archive', args=('1',)))
         self.failUnlessEqual(response.status_code, 302)
         self.failUnlessEqual(BackupArchive.objects.count(), 0)
+
+    def test_views_mail_archive(self):
+        #add auth app to backups
+        call_command('add_to_backups', 'auth')
+
+        #make user1 a superuser
+        self.user1.is_superuser = True
+        self.user1.save()
+
+        #login user1
+        self.client.login(username=self.user1.username, password=self.password)
+
+        #test send
+        response = self.client.get(reverse('admin:vz_backup_mail_archive', args=('1',)))
+        self.failUnlessEqual(response.status_code, 302)
+        #self.assertEquals(len(mail.outbox), 1)
 
 
     def tearDown(self):

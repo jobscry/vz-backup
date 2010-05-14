@@ -26,6 +26,7 @@
 	{% else %}
 				<a href="{% url admin:vz_backup_keep_archive "keep",archive.id %}" title="keep this archive">keep</a> | 
 	{% endif %}
+				<a href="{% url admin:vz_backup_mail_archive archive.id %}" title="resend this archive">mail</a> |
 				<a href="{% url admin:vz_backup_delete_archive archive.id %}" title="delete this archive">delete</a>
 			</td>
 		</tr>

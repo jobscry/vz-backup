@@ -91,6 +91,10 @@ Management Commands
 
 This creates a BackupObject for the widget app.
 
+`./manage.py backukp_all`
+
+This backs up all backup objects with include switch on.  Useful for cron jobs.
+
 Admin Site Integration
 ----------------------
 

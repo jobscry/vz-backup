@@ -102,3 +102,15 @@ def keep_archive(request, action, id):
     archive.save()
 
     return redirect(reverse('admin:vz_backup_backupobject_change', args=(archive.backup_object.id, )))
+
+@permission_required('backuparchive.can_change')
+def mail_archive(request, id):
+    try:
+        archive = BackupArchive.objects.select_related().get(id__exact=id)
+    except BackupArchive.DoesNotExist:
+        return HttpResponseNotFound('Archive with this ID does not exist.')
+
+    archive.backup_object.mail(archive.id)
+    request.user.message_set.create(message='Sent archive')
+
+    return redirect(reverse('admin:vz_backup_backupobject_change', args=(archive.backup_object.id, )))
