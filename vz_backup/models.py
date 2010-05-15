@@ -123,7 +123,7 @@ class BackupObject(models.Model):
             BackupArchive.objects.filter(
                 backup_object=self, keep=False, created__lt=threshold).delete()
 
-    def backup(self, notes=None):
+    def backup(self):
         dt = datetime.datetime.now()
         name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'),
             int(time.time()), FORMAT)
@@ -157,8 +157,7 @@ class BackupObject(models.Model):
                 name=name,
                 path=path,
                 size=os.path.getsize(path),
-                file_hash=generate_file_hash(path),
-                notes=notes)
+                file_hash=generate_file_hash(path))
 
         except IOError:
             raise UnableToCreateArchive

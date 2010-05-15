@@ -55,4 +55,4 @@ class Command(BaseCommand):
             print "This application is already being backed up."
             return
 
-        obj.backup(notes='initial backup')
+        obj.backup()
