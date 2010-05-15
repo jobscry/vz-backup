@@ -7,6 +7,8 @@ Uses Django's [dumpdata](http://docs.djangoproject.com/en/dev/ref/django-admin/#
 
 With this app you can [reset](http://docs.djangoproject.com/en/dev/ref/django-admin/#reset-appname-appname 'reset docs') an app's model data and [loaddata](http://docs.djangoproject.com/en/dev/ref/django-admin/#loaddata-fixture-fixture 'loaddata docs') from an existing backup archive.
 
+Reloading from backup archive will fail if hash from model does not match file.
+
 *WARNING*
 
 Use at own risk.  While I'm happy with the amount of tests, this app has not been tested very much with models that have ManyToMany or OneToMany fields.  I predict some instability when reloading data from models that contain or require data from other apps. 
@@ -20,7 +22,7 @@ TODO
 * Re-load 
     * <del>From Admin Site</del>
     * From Command
-* MD5/Sha-1 hash check
+* <del>Sha-1 hash check</del>
 
 Screenshots
 -----------

@@ -175,6 +175,7 @@ class BackupObject(models.Model):
             else:
                 ba = BackupArchive.objects.get(id__exact=which)
 
+            message.body='sha1 has for archive is: %s'%ba.file_hash
             message.attach_file(ba.path, mimetypes.guess_type(ba.path)[0])
             message.send()
 
