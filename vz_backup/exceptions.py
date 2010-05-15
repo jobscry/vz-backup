@@ -5,3 +5,6 @@ class UnableToCreateArchive(Exception):
 
 class UnableToDeleteArchive(Exception):
     pass
+
+class ArchiveHashesDoNotMatch(Exception):
+    pass

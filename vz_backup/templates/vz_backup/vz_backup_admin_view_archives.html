@@ -16,7 +16,7 @@
 		<tr class="{% cycle 'row1' 'row2' %}">
 			<th scope="row">{{ forloop.counter }}</th>
 			<td>{{ archive.created|date }}</td>
-			<td>{{ archive.name }}</td>
+			<td>{{ archive.name }}<br>{{ archive.file_hash }}</td>
 			<td>{{ archive.size|filesizeformat }}</td>
 			<td>{{ archive.keep|bool_icon }}</td>
 			<td>

@@ -7,6 +7,8 @@ from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.db.models import loading
 from django.test import TransactionTestCase
+from vz_backup import generate_file_hash
+from vz_backup.exceptions import ArchiveHashesDoNotMatch
 from vz_backup.tests.models import BackupTestWidget, create_widgets
 from vz_backup.models import backup_all, BackupObject, BackupArchive
 
@@ -86,6 +88,12 @@ class VZBackupTestCase(BackupTestCase):
         self.bo.save()
         call_command('backup_all')
         self.failUnlessEqual(BackupArchive.objects.count(), 2)
+
+
+    def test_models_file_hash(self):
+        #test file hash
+        ba = BackupArchive.objects.get(id__exact=1)
+        self.failUnlessEqual(ba.file_hash, generate_file_hash(ba.path))
 
 
     def test_models_backup(self):
@@ -266,6 +274,15 @@ class VZBackupTestCase(BackupTestCase):
         response = self.client.post(reverse('admin:vz_backup_reload_archive', args=('1', )))
         self.failUnlessEqual(BackupTestWidget.objects.count(), self.num_widgets)
         self.failUnlessEqual(response.status_code, 302)
+
+    def test_exeptions_ArchiveHashesDoNotMatch(self):
+        #test tampered file hash
+        ba = BackupArchive.objects.get(id__exact=1)
+        fh = ba.file_hash
+        ba.file_hash = 'malicious'
+        ba.save()
+        self.failUnlessRaises(ArchiveHashesDoNotMatch, self.bo.reload, 1)
+
 
     def tearDown(self):
         pass

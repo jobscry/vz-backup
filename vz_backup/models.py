@@ -7,15 +7,16 @@ from django.core.management import call_command
 from django.core.management.commands import dumpdata
 from django.db import models
 from django.db.models import Sum
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, pre_save
 
 import datetime
 import mimetypes
 import os
 import time
 
-from vz_backup.exceptions import UnableToCreateArchive
-from vz_backup.signals import check_auto_prune, check_mail_to, unlink_archive
+from vz_backup import generate_file_hash
+from vz_backup.exceptions import *
+from vz_backup.signals import maintenance_tasks, unlink_archive
 
 INDENT = getattr(settings, 'VZ_BACKUP_INDENT', 4)
 FORMAT = getattr(settings, 'VZ_BACKUP_FORMAT', 'json')
@@ -156,6 +157,7 @@ class BackupObject(models.Model):
                 name=name,
                 path=path,
                 size=os.path.getsize(path),
+                file_hash=generate_file_hash(path),
                 notes=notes)
 
         except IOError:
@@ -178,6 +180,9 @@ class BackupObject(models.Model):
 
     def reload(self, which):
         ba = BackupArchive.objects.only('backup_object', 'id', 'path').get(backup_object=self, id__exact=which)
+        if ba.file_hash != generate_file_hash(ba.path):
+            raise ArchiveHashesDoNotMatch
+
         call_command('reset', self.app_label, interactive=False)
         call_command('loaddata', ba.path, verbosity=0)
 
@@ -189,6 +194,7 @@ class BackupArchive(models.Model):
     name = models.CharField(blank=True, max_length=100, editable=False)
     path = models.FilePathField(path=settings.VZ_BACKUP_DIR, editable=False)
     size = models.BigIntegerField(default=0, editable=False)
+    file_hash = models.CharField(max_length=40, editable=False, default='', null=True, blank=True)
     notes = models.TextField(blank=True, null=True, default='')
     keep = models.BooleanField(default=False)
     edited = models.DateTimeField(blank=True, auto_now=True, editable=False)
@@ -210,5 +216,4 @@ def backup_all():
         b.backup()
 
 pre_delete.connect(unlink_archive, sender=BackupArchive)
-post_save.connect(check_auto_prune, sender=BackupArchive)
-post_save.connect(check_mail_to, sender=BackupArchive)
+post_save.connect(maintenance_tasks, sender=BackupArchive)

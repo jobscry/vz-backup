@@ -5,6 +5,12 @@ from vz_backup.exceptions import UnableToDeleteArchive
 
 import os
 
+def maintenance_tasks(sender, instance, created, **kwargs):
+    if created:
+        bo = instance.backup_object
+        bo.prune()
+        bo.mail()
+
 def unlink_archive(sender, instance, **kwargs):
     """Unlink Archive
     
@@ -16,12 +22,3 @@ def unlink_archive(sender, instance, **kwargs):
         os.unlink(instance.path)
     except OSError:
         raise UnableToDeleteArchive
-
-def check_auto_prune(sender, instance, created, **kwargs):
-    if created and instance.backup_object.auto_prune:
-        instance.backup_object.prune()
-
-
-def check_mail_to(sender, instance, created, **kwargs):
-    if created:
-        instance.backup_object.mail()
