@@ -9,7 +9,7 @@ With this app you can [reset](http://docs.djangoproject.com/en/dev/ref/django-ad
 
 Reloading from backup archive will fail if hash from model does not match file.
 
-*WARNING*
+### WARNING
 
 Use at own risk.  While I'm happy with the amount of tests, this app has not been tested very much with models that have ManyToMany or OneToMany fields.  I predict some instability when reloading data from models that contain or require data from other apps. 
 

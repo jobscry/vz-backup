@@ -15,12 +15,13 @@
 {% for archive in archives %}
 		<tr class="{% cycle 'row1' 'row2' %}">
 			<th scope="row">{{ forloop.counter }}</th>
-			<td>{{ archive.created|date }}</td>
-			<td>{{ archive.name }}<br>{{ archive.file_hash }}</td>
+			<td>{{ archive.created|date:'r' }}</td>
+			<td>
+				<strong><a href="{% url admin:vz_backup_download_archive archive.id %}" title="download this archive">{{ archive.name }}</a></strong>
+				<br>sha1: <em>{{ archive.file_hash }}</em></td>
 			<td>{{ archive.size|filesizeformat }}</td>
 			<td>{{ archive.keep|bool_icon }}</td>
 			<td>
-				<a href="{% url admin:vz_backup_download_archive archive.id %}" title="download this archive">download</a> | 
 	{% if archive.keep %}
 				<a href="{% url admin:vz_backup_keep_archive "unkeep",archive.id %}" title="unkeep this archive">unkeep</a> |
 	{% else %}

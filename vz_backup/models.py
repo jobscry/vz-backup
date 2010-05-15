@@ -46,8 +46,8 @@ class BackupObject(models.Model):
     include = models.BooleanField(default=True,
         help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
-    compress = models.CharField(max_length=4, choices=COMPRESS_CHOICES, default='none')
-    prune_by = models.CharField(max_length=4, choices=PRUNE_CHOICES,
+    compress = models.CharField(max_length=5, choices=COMPRESS_CHOICES, default='none')
+    prune_by = models.CharField(max_length=5, choices=PRUNE_CHOICES,
         default='count',
         help_text='What factor leads to archive file deletion?')
     prune_value = models.PositiveIntegerField(blank=True, null=True,

@@ -9,7 +9,7 @@ from django.db.models import loading
 from django.test import TransactionTestCase
 from vz_backup import generate_file_hash
 from vz_backup.exceptions import ArchiveHashesDoNotMatch
-from vz_backup.tests.models import BackupTestWidget, create_widgets
+from vz_backup.tests.testwidgets.models import BackupTestWidget, create_widgets
 from vz_backup.models import backup_all, BackupObject, BackupArchive
 
 import datetime
@@ -22,8 +22,9 @@ class BackupTestCase(TransactionTestCase):
     def _pre_setup(self):
         #add BackupTestWidget model
         self.old_installed_apps = settings.INSTALLED_APPS
-        settings.INSTALLED_APPS += ['vz_backup.tests']
-        loading.load_app('vz_backup.tests')
+        settings.INSTALLED_APPS += ['vz_backup.tests.testwidgets']
+        loading.cache.loaded = False
+        loading.load_app('vz_backup.tests.testwidgets')
         call_command('syncdb', verbosity=0, interactive=False)
 
         #create a temp directory for backup archives
@@ -58,7 +59,7 @@ class VZBackupTestCase(BackupTestCase):
         self.client.login(username=self.user1.username, password=self.password)
 
         #add auth app to backups
-        call_command('add_to_backups', 'vz_backup.tests')
+        call_command('add_to_backups', 'vz_backup.tests.testwidgets')
 
         #get backup object
         self.bo = BackupObject.objects.get(id__exact=1)
@@ -72,7 +73,7 @@ class VZBackupTestCase(BackupTestCase):
         self.assertEqual(BackupObject.objects.count(), 1)
 
         #get backup object
-        self.assertEqual(self.bo.app_label, 'tests')
+        self.assertEqual(self.bo.app_label, 'testwidgets')
 
         #test to see if initial backup archive was created
         self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
@@ -115,7 +116,7 @@ class VZBackupTestCase(BackupTestCase):
         self.bo.backup()
         self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
         ba = BackupArchive.objects.all()[0]
-        self.failUnlessEqual('tests', self.bo.__unicode__())
+        self.failUnlessEqual('testwidgets', self.bo.__unicode__())
         ba.delete()
 
         #test backup of auth app with bz2 compression, default format
