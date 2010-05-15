@@ -24,6 +24,7 @@ PRUNE_CHOICES = (
     ('count', 'Count'),
     ('size', 'Size'),
     ('time', 'Time'),
+    ('none', 'None'),
 )
 
 COMPRESS_CHOICES = (
@@ -82,6 +83,8 @@ class BackupObject(models.Model):
         If prune_by is "time", prune_value is number of days to keep
         BackupArchive files not marked "keep".  Find all BackupArchives
         older than today - prune_value, delete them.
+
+        If prune_by is "none", don't prune
         """
 
         if self.prune_by == 'count':

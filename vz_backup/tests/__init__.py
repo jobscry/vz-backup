@@ -182,6 +182,15 @@ class VZBackupTestCase(BackupTestCase):
         ba5 = BackupArchive.objects.filter(keep=False)[0]
         self.assertNotEqual(ba4.id, ba5.id)
 
+        #test prune_by as "none"
+        self.bo.prune_by = 'none'
+        self.bo.save()
+        self.bo.backup()
+        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 3)
+        self.bo.backup()
+        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 4)
+
+
     def test_models_mail_to(self):
         #test empty mail_to
         self.bo.mail(fail_silently=True)

@@ -5,15 +5,22 @@ Django App for automagically backing up Models data.  Backups can be compressed,
 
 Uses Django's [dumpdata](http://docs.djangoproject.com/en/dev/ref/django-admin/#dumpdata-appname-appname-appname-model 'dumpdata docs') management command.
 
+With this app you can [reset](http://docs.djangoproject.com/en/dev/ref/django-admin/#reset-appname-appname 'reset docs') an app's model data and [loaddata](http://docs.djangoproject.com/en/dev/ref/django-admin/#loaddata-fixture-fixture 'loaddata docs') from an existing backup archive.
+
+*WARNING*
+
+Use at own risk.  While I'm happy with the amount of tests, this app has not been tested very much with models that have ManyToMany or OneToMany fields.  I predict some instability when reloading data from models that contain or require data from other apps. 
+
 TODO
 ----
 
-* Email
+* <del>Email</del>
 * <del>Auto/Manual Pruning</del>
 * <del>Download</del>
 * Re-load 
-    * From Admin Site
+    * <del>From Admin Site</del>
     * From Command
+* MD5/Sha-1 hash check
 
 Screenshots
 -----------
@@ -69,6 +76,7 @@ A backup manager for an app.
 * count - delete after *x* number of archives that are not marked as *keep*, starting with oldest.  *x* is defined in **prune_by** 
 * size - delete after total aggregated archive size of archives not marked *keep* for app reaches *x*.  *x* is defined as kilo bytes in **prune_by**
 * time - delete archives not marked *keep* after *x* days starting with oldest. *x* is defined as days in **prune_by** 
+* none - don't prune
 
 **prune_value** - positive integer, see **prune_by**
 
