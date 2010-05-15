@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
+from django.core.management import call_command
 from django.core.management.commands import dumpdata
 from django.db import models
 from django.db.models import Sum
@@ -171,6 +172,11 @@ class BackupObject(models.Model):
 
             message.attach_file(ba.path, mimetypes.guess_type(ba.path)[0])
             message.send()
+
+    def reload(self, which):
+        ba = BackupArchive.objects.only('backup_object', 'id', 'path').get(backup_object=self, id__exact=which)
+        call_command('reset', self.app_label, interactive=False)
+        call_command('loaddata', ba.path, verbosity=0)
 
 
 class BackupArchive(models.Model):

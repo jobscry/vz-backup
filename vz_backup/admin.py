@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.db.models import Sum
 from django.conf.urls.defaults import *
 from vz_backup.models import BackupObject, BackupArchive
-from vz_backup.views import delete_archive
+from vz_backup.views import delete_archive, reload_archive
 
 
 def backup_now(modeladmin, request, queryset):
@@ -46,8 +46,14 @@ class BackupObjectAdmin(admin.ModelAdmin):
     ]
     save_on_top = True
 
+
     def admin_delete_archive(self, request, id):
         return delete_archive(request, self, id)
+
+
+    def admin_reload_archive(self, request, id):
+        return reload_archive(request, self, id)
+
 
     def get_urls(self):
         urls = super(BackupObjectAdmin, self).get_urls()
@@ -56,6 +62,7 @@ class BackupObjectAdmin(admin.ModelAdmin):
             url(r'^(?P<action>keep|unkeep)/(?P<id>\d+)/', 'vz_backup.views.keep_archive', name='vz_backup_keep_archive'),
             url(r'^delete/(?P<id>\d+)/', self.admin_delete_archive, name='vz_backup_delete_archive'),
             url(r'^mail/(?P<id>\d+)/', 'vz_backup.views.mail_archive', name='vz_backup_mail_archive'),
+            url(r'^reload/(?P<id>\d+)/', self.admin_reload_archive, name='vz_backup_reload_archive'),
         )
         return my_urls + urls
 

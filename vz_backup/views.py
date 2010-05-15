@@ -13,7 +13,7 @@ import mimetypes
 import os
 
 @permission_required('backuparchive.can_delete')
-def delete_archive(request, model_admin, id=None):
+def delete_archive(request, model_admin, id):
     """
     http://www.lonelycode.com/2009/05/28/customising-the-django-admin/
     http://www.beardygeek.com/2010/03/adding-views-to-the-django-admin/
@@ -114,3 +114,31 @@ def mail_archive(request, id):
     request.user.message_set.create(message='Sent archive')
 
     return redirect(reverse('admin:vz_backup_backupobject_change', args=(archive.backup_object.id, )))
+
+
+@permission_required('backuparchive.can_change')
+def reload_archive(request, model_admin, id):
+    try:
+        archive = BackupArchive.objects.select_related().get(id__exact=id)
+    except BackupArchive.DoesNotExist:
+        return HttpResponseNotFound('Archive with this ID does not exist.')
+
+    opts = model_admin.model._meta
+    admin_site = model_admin.admin_site
+    has_perm = request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
+
+    if request.method == 'POST':
+        archive.backup_object.reload(archive.id)
+        request.user.message_set.create(message='App Reloaded from Backup Archive')
+        return redirect(reverse('admin:vz_backup_backupobject_change', args=(archive.backup_object.id, )))
+
+    context = {
+        'archive': archive,
+        'admin_site': admin_site.name,
+        'title': 'Reload App from Backup Archive',
+        'opts':opts,
+        'root_path': '/%s' % admin_site.root_path,
+        'app_label' : opts.app_label,
+        'has_change_permission':has_perm}
+    template = 'admin/vz_backup/backuparchive/reload_archive.html'
+    return render_to_response(template, context, context_instance=RequestContext(request))
