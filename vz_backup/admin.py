@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib import admin
-from django.db.models import Sum
 from django.conf.urls.defaults import *
 from vz_backup.models import BackupObject, BackupArchive
 from vz_backup.views import delete_archive, reload_archive
@@ -67,16 +66,13 @@ class BackupObjectAdmin(admin.ModelAdmin):
         return my_urls + urls
 
     def backup_size(self, obj):
-        qs = BackupArchive.objects.filter(
-            backup_object=obj).aggregate(Sum('size'))
-        return _sizeof_fmt(qs['size__sum'])
+        return _sizeof_fmt(obj.archives_size)
 
     def number_of_archives(self, obj):
-        return BackupArchive.objects.filter(backup_object=obj).count()
+        return obj.archives.count()
 
     def kept_archives(self, obj):
-        return BackupArchive.objects.filter(
-            backup_object=obj, keep=True).count()
+        return obj.kept_archives.count()
 
 admin.site.register(BackupObject, BackupObjectAdmin)
 

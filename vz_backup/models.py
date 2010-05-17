@@ -46,14 +46,14 @@ class BackupObject(models.Model):
     include = models.BooleanField(default=True,
         help_text='Include this app when performing backup?')
     use_natural_keys = models.BooleanField(default=True)
-    compress = models.CharField(max_length=5, choices=COMPRESS_CHOICES, default='none')
+    compress = models.CharField(max_length=5, choices=COMPRESS_CHOICES, default='none', db_index=True)
     prune_by = models.CharField(max_length=5, choices=PRUNE_CHOICES,
-        default='count',
-        help_text='What factor leads to archive file deletion?')
-    prune_value = models.PositiveIntegerField(blank=True, null=True,
+        default='none',
+        help_text='What factor leads to archive file deletion?', db_index=True)
+    prune_value = models.FloatField(blank=True, null=True,
         default=10)
     auto_prune = models.BooleanField(default=False,
-        help_text="Prune after backup?")
+        help_text="Prune after backup?", db_index=True)
     mail_to = models.ManyToManyField(User, limit_choices_to={'is_superuser': True}, 
         blank=True, null=True, default='', help_text='Select which admin(s) to send new backup archives to.')
     created = models.DateTimeField(blank=True, auto_now_add=True)
@@ -62,6 +62,46 @@ class BackupObject(models.Model):
 
     def __unicode__(self):
         return self.app_label
+
+    @property
+    def archives(self):
+        return BackupArchive.objects.filter(backup_object__exact=self)
+
+
+    @property
+    def kept_archives(self):
+        return self.archives.filter(keep=True)
+
+
+    @property
+    def unkept_archives(self):
+        return self.archives.filter(keep=False)
+
+
+    @property
+    def unkept_archives_size(self):
+        qs = self.unkept_archives.aggregate(Sum('size'))
+        if qs['size__sum'] is None:
+            return 0
+        return qs['size__sum']
+
+
+    @property
+    def archives_size(self):
+        qs = self.archives.aggregate(Sum('size'))
+        if qs['size__sum'] is None:
+            return 0
+        return qs['size__sum']
+
+
+    @property
+    def last_archive(self):
+        return self.archives[0]
+
+
+    @property
+    def last_kept_archive(self):
+        return self.kept_archives[0]
 
 
     def prune(self):
@@ -87,13 +127,12 @@ class BackupObject(models.Model):
 
         If prune_by is "none", don't prune
         """
+        unkept = self.unkept_archives
 
         if self.prune_by == 'count':
-
-            if BackupArchive.objects.filter(backup_object=self,
-                keep=False).count() > self.prune_value:
-                last_backup = BackupArchive.objects.filter(backup_object=self,
-                    keep=False).only('created')[self.prune_value-1]
+            prune_value = int(self.prune_value)
+            if unkept.count() > prune_value:
+                last_backup = unkept.all()[prune_value-1]
                 BackupArchive.objects.filter(
                     backup_object=self,
                     keep=False,
@@ -102,15 +141,12 @@ class BackupObject(models.Model):
         elif self.prune_by == 'size':
 
             prune_value = self.prune_value * 1000
-            qs = BackupArchive.objects.filter(backup_object=self,
-                keep=False).aggregate(Sum('size'))
-            size = qs['size__sum']
+
             ids = list()
             start = 0
+            size = self.unkept_archives_size
             while size > prune_value:
-                archive = BackupArchive.objects.filter(
-                    backup_object=self, keep=False).only(
-                    'id', 'size', 'created').order_by('created')[start]
+                archive = unkept.order_by('created')[start]
                 ids.append(archive.id)
                 start = start + 1
                 size = size - archive.size
@@ -123,10 +159,13 @@ class BackupObject(models.Model):
             BackupArchive.objects.filter(
                 backup_object=self, keep=False, created__lt=threshold).delete()
 
+        else:
+            pass
+
+
     def backup(self):
         dt = datetime.datetime.now()
-        name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'),
-            int(time.time()), FORMAT)
+        name = u'%s_%s%s.%s' % (self.app_label, dt.strftime('%Y%j-'), dt.microsecond, FORMAT)
 
         if self.compress == 'gz':
             from gzip import GzipFile
@@ -150,14 +189,19 @@ class BackupObject(models.Model):
                     use_natural_keys=self.use_natural_keys,
                     indent=INDENT,
                     format=FORMAT))
-
             b_file.close()
-            BackupArchive.objects.create(
-                backup_object=self,
-                name=name,
-                path=path,
-                size=os.path.getsize(path),
-                file_hash=generate_file_hash(path))
+
+            file_hash = generate_file_hash(path)
+            try:
+                ba = BackupArchive.objects.get(file_hash__exact=file_hash, backup_object__exact=self)
+                os.unlink(path)
+            except BackupArchive.DoesNotExist:
+                BackupArchive.objects.create(
+                    backup_object=self,
+                    name=name,
+                    path=path,
+                    size=os.path.getsize(path),
+                    file_hash=file_hash)
 
         except IOError:
             raise UnableToCreateArchive
@@ -193,10 +237,9 @@ class BackupArchive(models.Model):
     backup_object = models.ForeignKey(BackupObject, editable=False)
     name = models.CharField(blank=True, max_length=100, editable=False)
     path = models.FilePathField(path=settings.VZ_BACKUP_DIR, editable=False)
-    size = models.BigIntegerField(default=0, editable=False)
-    file_hash = models.CharField(max_length=40, editable=False, default='', null=True, blank=True)
-    notes = models.TextField(blank=True, null=True, default='')
-    keep = models.BooleanField(default=False)
+    size = models.BigIntegerField(default=0, editable=False, db_index=True)
+    file_hash = models.CharField(max_length=40, editable=False, default='', null=True, blank=True, db_index=True)
+    keep = models.BooleanField(default=False, db_index=True)
     edited = models.DateTimeField(blank=True, auto_now=True, editable=False)
     created = models.DateTimeField(blank=True, auto_now_add=True, editable=False)
 

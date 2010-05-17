@@ -8,7 +8,8 @@ import os
 def maintenance_tasks(sender, instance, created, **kwargs):
     if created:
         bo = instance.backup_object
-        bo.prune()
+        if bo.auto_prune:
+            bo.prune()
         bo.mail()
 
 def unlink_archive(sender, instance, **kwargs):
@@ -20,5 +21,5 @@ def unlink_archive(sender, instance, **kwargs):
     unlinks file after a BackupArhive object has been deleted"""
     try:
         os.unlink(instance.path)
-    except OSError:
+    except IOError:
         raise UnableToDeleteArchive

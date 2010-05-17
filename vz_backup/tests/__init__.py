@@ -76,19 +76,21 @@ class VZBackupTestCase(BackupTestCase):
         self.assertEqual(self.bo.app_label, 'testwidgets')
 
         #test to see if initial backup archive was created
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
+        self.assertEqual(self.bo.archives.count(), 1)
 
 
     def test_management_backup_all(self): 
         #test backup all
+        create_widgets(1)
         call_command('backup_all')
-        self.failUnlessEqual(BackupArchive.objects.count(), 2)
+        self.failUnlessEqual(self.bo.archives.count(), 2)
 
         #test backup all with no backup objects included
         self. bo.include = False
         self.bo.save()
+        create_widgets(1)
         call_command('backup_all')
-        self.failUnlessEqual(BackupArchive.objects.count(), 2)
+        self.failUnlessEqual(self.bo.archives.count(), 2)
 
 
     def test_models_file_hash(self):
@@ -97,42 +99,53 @@ class VZBackupTestCase(BackupTestCase):
         self.failUnlessEqual(ba.file_hash, generate_file_hash(ba.path))
 
 
+    def test_models_file_hash_same(self):
+        #test backup only if changed
+        self.bo.backup()
+        self.failUnlessEqual(self.bo.archives.count(), 1)
+
+
     def test_models_backup(self):
         #delete initial backup archive
-        ba = BackupArchive.objects.all().delete()
+        ba = self.bo.archives.delete()
         
         #test include switch
         self.bo.include = False
         self.bo.save()
+        create_widgets(1)
         backup_all()
-        self.failUnlessEqual(BackupArchive.objects.count(), 0)
+        self.failUnlessEqual(self.bo.archives.count(), 0)
         self.bo.include = True
         self.bo.save()
+        create_widgets(1)
         backup_all()
-        self.failUnlessEqual(BackupArchive.objects.count(), 1)
-        BackupArchive.objects.all().delete()
+        self.failUnlessEqual(self.bo.archives.count(), 1)
+        self.bo.archives.delete()
 
         #test backup of auth app with no compression, default format
+        create_widgets(1)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
-        ba = BackupArchive.objects.all()[0]
+        self.assertEqual(self.bo.archives.count(), 1)
+        ba = self.bo.last_archive
         self.failUnlessEqual('testwidgets', self.bo.__unicode__())
         ba.delete()
 
         #test backup of auth app with bz2 compression, default format
         self.bo.compress = 'bz2'
         self.bo.save()
+        create_widgets(1)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
-        ba = BackupArchive.objects.all()[0]
+        self.assertEqual(self.bo.archives.count(), 1)
+        ba = self.bo.last_archive
         ba.delete()
 
         #test backup of auth app with gz compression, default format
         self.bo.compress = 'gz'
         self.bo.save()
+        create_widgets(1)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 1)
-        ba = BackupArchive.objects.all()[0]
+        self.assertEqual(self.bo.archives.count(), 1)
+        ba = self.bo.last_archive
 
 
     def test_models_prune(self):
@@ -141,38 +154,48 @@ class VZBackupTestCase(BackupTestCase):
         self.bo.save()
 
         #mark initial backup archive as "keep"
-        ba1 = BackupArchive.objects.get(id__exact=1)
+        ba1 = self.bo.last_archive
         ba1.keep = True
         ba1.save()
 
         #test prune_by as "count"
+        self.bo.prune_by = 'count'
         self.bo.prune_value = 1
         self.bo.save()
+        create_widgets(1)
         self.bo.backup()
-        ba2 = BackupArchive.objects.filter(keep=False)[0]
+        ba2 = self.bo.last_archive
 
         #test for two backups, intial (keep) + ba2
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 2)
+        self.assertEqual(self.bo.archives.count(), 2)
+        create_widgets(1)
         self.bo.backup()
 
         #test for two backups, initial (keep) + last backup
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 2)
+        self.assertEqual(self.bo.archives.count(), 2)
 
         #ensure ba2 was deleted
-        ba3 = BackupArchive.objects.filter(keep=False)[0]
+        ba3 = self.bo.unkept_archives[0]
         self.assertNotEqual(ba2.id, ba3.id)
 
         #test prune_by as "size"
-        self.bo.prune_by = 'size'
-        self.bo.prune_value = ba3.size/1000.0
+        self.bo.prune_by = 'none'
         self.bo.save()
+        #create a backup to measure
+        create_widgets(1)
         self.bo.backup()
-
-        #test for two backups, initial (keep) + last backup
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 2)
+        ba4 = self.bo.unkept_archives[0]
+        #set prune by to measured sizve
+        self.bo.prune_by = 'size'
+        self.bo.prune_value = ba4.size / 1000.0
+        self.bo.save()
+        #delete the known backup archive
+        ba4.delete()
+        #create a backup with a size we know
+        self.bo.backup()
+        ba4 = self.bo.unkept_archives[0]
 
         #ensure ba3 was deleted
-        ba4 = BackupArchive.objects.filter(keep=False)[0]
         self.assertNotEqual(ba3.id, ba4.id)
 
         #test pure_by as "time"
@@ -186,18 +209,20 @@ class VZBackupTestCase(BackupTestCase):
         ba4.save()
         ba1.created = ba1.created - delta
         ba1.save()
+        create_widgets(1)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 2)
-        ba5 = BackupArchive.objects.filter(keep=False)[0]
+        self.assertEqual(self.bo.archives.count(), 2)
+        ba5 = self.bo.last_archive
         self.assertNotEqual(ba4.id, ba5.id)
 
         #test prune_by as "none"
         self.bo.prune_by = 'none'
         self.bo.save()
+        create_widgets(1)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 3)
+        self.assertEqual(self.bo.archives.count(), 3)
         self.bo.backup()
-        self.assertEqual(BackupArchive.objects.filter(backup_object=self.bo).count(), 4)
+        self.assertEqual(self.bo.archives.count(), 3)
 
 
     def test_models_mail_to(self):
